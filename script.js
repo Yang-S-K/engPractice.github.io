@@ -363,16 +363,20 @@ function viewRecords() {
     const content = document.getElementById("record-content");
     content.innerHTML = "<h2>測驗紀錄</h2>";
 
-    for (const direction in records) {
-        const directionRecords = records[direction];
-        const section = document.createElement("div");
-        section.innerHTML = `<h3>${direction}</h3>`;
-        const recordList = document.createElement("div");
-        recordList.className = "record-list";
+    const recordsPerPage = 5; // 每頁顯示 5 條紀錄
+    let currentPage = 1;
 
-        if (directionRecords.length === 0) {
-            section.innerHTML += "<p>目前沒有紀錄。</p>";
-        } else {
+    function renderPage(page) {
+        const start = (page - 1) * recordsPerPage;
+        const end = start + recordsPerPage;
+
+        content.innerHTML = "<h2>測驗紀錄</h2>";
+
+        const section = document.createElement("div");
+        section.className = "record-list";
+
+        for (const direction in records) {
+            const directionRecords = records[direction].slice(start, end);
             directionRecords.forEach((record, index) => {
                 const item = document.createElement("div");
                 item.className = "record-list-item";
@@ -383,52 +387,88 @@ function viewRecords() {
                     <span>時間: ${record.totalTime} 秒</span>
                     <button class="view-details-btn" data-direction="${direction}" data-index="${index}">查看詳情</button>
                 `;
-                recordList.appendChild(item);
+                section.appendChild(item);
             });
         }
 
-        section.appendChild(recordList);
         content.appendChild(section);
+
+        const totalPages = Math.ceil(Object.values(records).flat().length / recordsPerPage);
+        const pagination = renderPagination(currentPage, totalPages, renderPage);
+        content.appendChild(pagination);
+
+        document.querySelectorAll(".view-details-btn").forEach(button => {
+            button.addEventListener("click", (event) => {
+                const direction = event.target.getAttribute("data-direction");
+                const recordIndex = event.target.getAttribute("data-index");
+                viewRecordDetails(direction, recordIndex);
+            });
+        });
     }
 
-    document.querySelectorAll(".view-details-btn").forEach(button => {
-        button.addEventListener("click", (event) => {
-            const direction = event.target.getAttribute("data-direction");
-            const recordIndex = event.target.getAttribute("data-index");
-            viewRecordDetails(direction, recordIndex);
-        });
-    });
+    renderPage(currentPage);
+}
+
+function renderPagination(currentPage, totalPages, onPageChange) {
+    const paginationContainer = document.createElement("div");
+    paginationContainer.id = "pagination";
+    paginationContainer.innerHTML = "";
+
+    for (let i = 1; i <= totalPages; i++) {
+        const pageButton = document.createElement("button");
+        pageButton.innerText = i;
+        pageButton.className = i === currentPage ? "current-page" : "";
+        pageButton.addEventListener("click", () => onPageChange(i));
+        paginationContainer.appendChild(pageButton);
+    }
+
+    return paginationContainer;
 }
 
 function viewRecordDetails(direction, index) {
     const record = records[direction][index];
     const content = document.getElementById("record-content");
 
-    content.innerHTML = `
-        <h2>測驗詳情 (${direction})</h2>
-        <p>完成時間: ${record.totalTime} 秒</p>
-        <p>完成題數: ${record.totalQuestions}</p>
-        <div class="record-list" id="record-detail-list"></div>
-        <button id="back-to-records">返回紀錄列表</button>
-    `;
+    const detailsPerPage = 10; // 每頁顯示 10 條詳情
+    let currentPage = 1;
 
-    const detailList = document.getElementById("record-detail-list");
-    record.answers.forEach((answer, idx) => {
-        const detailItem = document.createElement("div");
-        detailItem.className = "record-list-item";
+    function renderDetailsPage(page) {
+        const start = (page - 1) * detailsPerPage;
+        const end = start + detailsPerPage;
+        const paginatedAnswers = record.answers.slice(start, end);
 
-        detailItem.innerHTML = `
-            <span>題目 ${idx + 1}</span>
-            <span>${answer.question}</span>
-            <span>你的答案: ${answer.userAnswer}</span>
-            <span>正確答案: ${answer.correctAnswer}</span>
-            <span>${answer.isCorrect ? "✅" : "❌"}</span>
+        content.innerHTML = `
+            <h2>測驗詳情 (${direction})</h2>
+            <p>完成時間: ${record.totalTime} 秒</p>
+            <p>完成題數: ${record.totalQuestions}</p>
+            <div class="record-list" id="record-detail-list"></div>
+            <button id="back-to-records">返回紀錄列表</button>
         `;
-        detailList.appendChild(detailItem);
-    });
 
-    document.getElementById("back-to-records").addEventListener("click", viewRecords);
+        const detailList = document.getElementById("record-detail-list");
+        paginatedAnswers.forEach((answer, idx) => {
+            const detailItem = document.createElement("div");
+            detailItem.className = "record-list-item";
+            detailItem.innerHTML = `
+                <span>題目 ${start + idx + 1}</span>
+                <span>${answer.question}</span>
+                <span>你的答案: ${answer.userAnswer}</span>
+                <span>正確答案: ${answer.correctAnswer}</span>
+                <span>${answer.isCorrect ? "✅" : "❌"}</span>
+            `;
+            detailList.appendChild(detailItem);
+        });
+
+        const totalPages = Math.ceil(record.answers.length / detailsPerPage);
+        const pagination = renderPagination(currentPage, totalPages, renderDetailsPage);
+        content.appendChild(pagination);
+
+        document.getElementById("back-to-records").addEventListener("click", viewRecords);
+    }
+
+    renderDetailsPage(currentPage);
 }
+
 
 
 function viewWords() {
