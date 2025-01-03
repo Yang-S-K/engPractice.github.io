@@ -429,7 +429,7 @@ function viewRecordDetails(direction, index) {
     const record = records[direction][index];
     const content = document.getElementById("record-content");
 
-    const detailsPerPage = 10; // 每頁顯示 10 條詳情
+    const detailsPerPage = 5; // 每頁顯示 5 條詳情
     let currentPage = 1;
 
     function renderDetailsPage(page) {
@@ -479,7 +479,7 @@ function viewWords() {
     wordList.className = "word-list";
     wordList.id = "paginated-word-list";
 
-    const wordsPerPage = 10; // 每頁顯示 10 個單字
+    const wordsPerPage = 5; // 每頁顯示 5 個單字
     let currentPage = 1;
 
     // 渲染特定頁面
