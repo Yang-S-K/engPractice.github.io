@@ -34,31 +34,40 @@ async function loadWordBank() {
     }
 }
 async function saveRecordsToGitHub(records) {
-    const token = "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"; // GitHub 個人存取權杖
+    const token = "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";
     const repoOwner = "Yang-S-K";
     const repoName = "engPractice.github.io";
-    const filePath = "data/quizRecords.json"; // 儲存紀錄的路徑
+    const filePath = "data/quizRecords.json";
     const commitMessage = "更新測驗紀錄";
 
-    const content = btoa(JSON.stringify(records, null, 2)); // 編碼 JSON 檔案
+    const content = btoa(unescape(encodeURIComponent(JSON.stringify(records, null, 2))));
 
     try {
-        // 取得現有檔案的 SHA 值（如檔案已存在）
-        const response = await fetch(
-            `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${filePath}`,
-            { headers: { Authorization: `token ${token}` } }
-        );
+        const fileUrl = `https://api.github.com/repos/${repoOwner}/${repoName}/contents/${filePath}`;
+        const headers = {
+            Authorization: `token ${token}`,
+            "Content-Type": "application/json",
+        };
 
-        const data = await response.json();
-        const sha = data.sha;
+        let sha = null;
+        try {
+            const response = await fetch(fileUrl, { headers });
+            if (response.ok) {
+                const data = await response.json();
+                sha = data.sha;
+            } else if (response.status === 404) {
+                console.warn("檔案不存在，將創建新檔案。");
+            } else {
+                const errorData = await response.json();
+                console.error("無法取得檔案資訊：", errorData);
+            }
+        } catch (error) {
+            console.warn("檔案檢查時發生錯誤：", error);
+        }
 
-        // 更新檔案
-        await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/contents/${filePath}`, {
+        const response = await fetch(fileUrl, {
             method: "PUT",
-            headers: {
-                Authorization: `token ${token}`,
-                "Content-Type": "application/json",
-            },
+            headers,
             body: JSON.stringify({
                 message: commitMessage,
                 content,
@@ -66,12 +75,19 @@ async function saveRecordsToGitHub(records) {
             }),
         });
 
-        alert("紀錄已成功更新到 GitHub！");
+        if (response.ok) {
+            alert("紀錄已成功儲存到 GitHub！");
+        } else {
+            const errorData = await response.json();
+            console.error("儲存失敗：", errorData);
+            alert(`儲存失敗：${errorData.message}`);
+        }
     } catch (error) {
-        console.error("儲存紀錄到 GitHub 時發生錯誤:", error);
+        console.error("儲存時發生錯誤：", error);
         alert("無法儲存紀錄到 GitHub！");
     }
 }
+
 
 
 // 換頁邏輯
@@ -407,6 +423,18 @@ function viewWords() {
     renderPage(currentPage);
 }
 
+// 測驗結束後的紀錄更新與儲存
+function saveRecordAfterQuiz() {
+    records.push({
+        direction: quizDirection,
+        score,
+        totalQuestions,
+        totalTime: totalTimer,
+        answers: currentAnswers.slice(), // 深拷貝
+    });
+
+    saveRecordsToGitHub(records); // 自動儲存到 GitHub
+}
 
 
 loadWordBank();
