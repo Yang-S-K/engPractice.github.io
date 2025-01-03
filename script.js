@@ -367,6 +367,7 @@ function viewRecords() {
     let currentPage = 1;
 
     function renderPage(page) {
+        currentPage = page; // 更新當前頁面
         const start = (page - 1) * recordsPerPage;
         const end = start + recordsPerPage;
 
@@ -381,11 +382,11 @@ function viewRecords() {
                 const item = document.createElement("div");
                 item.className = "record-list-item";
                 item.innerHTML = `
-                    <span>#${index + 1}</span>
+                    <span>#${start + index + 1}</span>
                     <span>題型: ${record.quizType === "multiple-choice" ? "選擇題" : "填空題"}</span>
                     <span>得分: ${record.score}/${record.totalQuestions}</span>
                     <span>時間: ${record.totalTime} 秒</span>
-                    <button class="view-details-btn" data-direction="${direction}" data-index="${index}">查看詳情</button>
+                    <button class="view-details-btn" data-direction="${direction}" data-index="${start + index}">查看詳情</button>
                 `;
                 section.appendChild(item);
             });
@@ -409,16 +410,18 @@ function viewRecords() {
     renderPage(currentPage);
 }
 
+
 function renderPagination(currentPage, totalPages, onPageChange) {
     const paginationContainer = document.createElement("div");
     paginationContainer.id = "pagination";
-    paginationContainer.innerHTML = "";
 
     for (let i = 1; i <= totalPages; i++) {
         const pageButton = document.createElement("button");
         pageButton.innerText = i;
         pageButton.className = i === currentPage ? "current-page" : "";
-        pageButton.addEventListener("click", () => onPageChange(i));
+        pageButton.addEventListener("click", () => {
+            onPageChange(i); // 切換頁面
+        });
         paginationContainer.appendChild(pageButton);
     }
 
@@ -433,6 +436,7 @@ function viewRecordDetails(direction, index) {
     let currentPage = 1;
 
     function renderDetailsPage(page) {
+        currentPage = page; // 更新當前頁面
         const start = (page - 1) * detailsPerPage;
         const end = start + detailsPerPage;
         const paginatedAnswers = record.answers.slice(start, end);
