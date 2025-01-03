@@ -115,6 +115,9 @@ document.getElementById("start-quiz").addEventListener("click", () => {
         alert("無效的測驗類型！");
     }
 });
+document.getElementById("go-to-json-generator").addEventListener("click", () => {
+    window.location.href = "json_generator.html"; // 替換為您的 JSON 生成器頁面的路徑
+});
 
 
 document.getElementById("back-to-home").addEventListener("click", () => {
