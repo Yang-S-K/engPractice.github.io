@@ -181,25 +181,9 @@ function startQuiz() {
 
     const remainingWords = wordBank.filter(word => !word.seen);
 
+    // 檢查是否已達到題目數限制或題庫用盡
     if (remainingWords.length === 0 || totalQuestions >= questionLimit) {
-        stopTotalTimer();
-
-        records[quizDirection].push({
-            direction: quizDirection,
-            score,
-            totalQuestions,
-            totalTime: totalTimer,
-            answers: currentAnswers.slice(), // 深拷貝本次作答內容
-        });
-
-        content.innerHTML = `
-            <h2>測驗結束！</h2>
-            <p>你完成了 ${totalQuestions} / ${questionLimit === Infinity ? totalQuestions : questionLimit} 題</p>
-            <p>總計時: ${totalTimer} 秒</p>
-            <button id="restart-quiz">重新測驗</button>
-        `;
-
-        document.getElementById("restart-quiz").addEventListener("click", resetQuiz);
+        endQuiz(); // 呼叫測驗結束函式
         return;
     }
 
@@ -249,8 +233,7 @@ function startQuiz() {
         selectedWord.seen = true;
         updateScoreboard();
         setTimeout(() => {
-            startQuiz();
-            document.getElementById("answer").focus();
+            startQuiz(); // 繼續下一題或結束
         }, 1000);
     });
 
@@ -264,6 +247,7 @@ function startQuiz() {
     content.appendChild(submit);
     content.appendChild(result);
 }
+
 function endQuiz() {
     stopTotalTimer(); // 停止計時
 
