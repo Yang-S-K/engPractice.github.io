@@ -264,6 +264,32 @@ function startQuiz() {
     content.appendChild(submit);
     content.appendChild(result);
 }
+function endQuiz() {
+    stopTotalTimer(); // 停止計時
+
+    // 將本次測驗紀錄加入 records
+    records[quizDirection].push({
+        direction: quizDirection,
+        score,
+        totalQuestions,
+        totalTime: totalTimer,
+        answers: currentAnswers.slice(), // 深拷貝本次作答內容
+    });
+
+    // 顯示測驗結果
+    const content = document.getElementById("content");
+    content.innerHTML = `
+        <h2>測驗結束！</h2>
+        <p>你完成了 ${totalQuestions} / ${questionLimit === Infinity ? totalQuestions : questionLimit} 題</p>
+        <p>總計時: ${totalTimer} 秒</p>
+        <button id="restart-quiz">重新測驗</button>
+    `;
+
+    document.getElementById("restart-quiz").addEventListener("click", resetQuiz);
+
+    // 呼叫儲存函式，儲存到 GitHub
+    saveRecordsToGitHub(records);
+}
 
 function resetQuiz() {
     wordBank.forEach(word => (word.seen = false));
