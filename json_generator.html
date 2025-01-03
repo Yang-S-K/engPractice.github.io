@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON 生成器</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background: linear-gradient(to bottom right, #f0f8ff, #e6e6fa);
+            color: #333;
+        }
+        h1 {
+            text-align: center;
+            color: #4b0082;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            margin-top: 10px;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            background-color: #4b0082;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #6a5acd;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .word-list {
+            margin-top: 20px;
+        }
+        .word-list-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 10px;
+            border-bottom: 1px solid #ccc;
+        }
+        .delete-btn {
+            background-color: #ff4d4d;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .delete-btn:hover {
+            background-color: #ff1a1a;
+        }
+        .back-btn {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .back-btn a {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #4b0082;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        .back-btn a:hover {
+            background-color: #6a5acd;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>JSON 生成器</h1>
+        <label for="english">英文單字：</label>
+        <input type="text" id="english" placeholder="請輸入英文單字">
+
+        <label for="chinese">中文翻譯：</label>
+        <input type="text" id="chinese" placeholder="請輸入中文翻譯">
+
+        <label for="bulkInput">批量輸入 (格式: 單字 翻譯，每行一組)：</label>
+        <textarea id="bulkInput" placeholder="例如：\napple 蘋果\nbanana 香蕉\n"></textarea>
+
+        <button onclick="addWord()">新增單字</button>
+        <button onclick="bulkAddWords()">批量新增</button>
+        <button onclick="downloadJSON()">下載 JSON</button>
+
+        <h2>生成的 JSON</h2>
+        <textarea id="output" readonly></textarea>
+
+        <h2>單字列表</h2>
+        <div class="word-list" id="wordList"></div>
+
+        <div class="back-btn">
+            <a href="index.html">返回主頁</a>
+        </div>
+    </div>
+
+    <script>
+        let wordBank = [];
+
+        function addWord() {
+            const english = document.getElementById('english').value.trim();
+            const chinese = document.getElementById('chinese').value.trim();
+
+            if (english === '' || chinese === '') {
+                alert('請填寫完整的單字和翻譯。');
+                return;
+            }
+
+            const newEntry = {
+                word: english,
+                translation: chinese,
+                seen: false
+            };
+
+            wordBank.push(newEntry);
+            updateOutput();
+            updateWordList();
+
+            // 清空輸入框
+            document.getElementById('english').value = '';
+            document.getElementById('chinese').value = '';
+        }
+
+        function bulkAddWords() {
+            const bulkInput = document.getElementById('bulkInput').value.trim();
+
+            if (bulkInput === '') {
+                alert('請輸入批量單字和翻譯。');
+                return;
+            }
+
+            const lines = bulkInput.split('\n');
+            lines.forEach(line => {
+                const parts = line.trim().split(' ');
+                if (parts.length === 2) {
+                    const [english, chinese] = parts;
+                    wordBank.push({ word: english, translation: chinese, seen: false });
+                }
+            });
+
+            updateOutput();
+            updateWordList();
+
+            // 清空批量輸入框
+            document.getElementById('bulkInput').value = '';
+        }
+
+        function deleteWord(index) {
+            wordBank.splice(index, 1);
+            updateOutput();
+            updateWordList();
+        }
+
+        function updateOutput() {
+            const sortedWordBank = [...wordBank].sort((a, b) => a.word.localeCompare(b.word));
+            document.getElementById('output').value = JSON.stringify(sortedWordBank, null, 4);
+        }
+
+        function updateWordList() {
+            const wordListDiv = document.getElementById('wordList');
+            wordListDiv.innerHTML = '';
+            wordBank.forEach((entry, index) => {
+                const div = document.createElement('div');
+                div.className = 'word-list-item';
+                div.innerHTML = `
+                    <span>${entry.word} - ${entry.translation}</span>
+                    <button class="delete-btn" onclick="deleteWord(${index})">刪除</button>
+                `;
+                wordListDiv.appendChild(div);
+            });
+        }
+
+        function downloadJSON() {
+            const sortedWordBank = [...wordBank].sort((a, b) => a.word.localeCompare(b.word));
+            const blob = new Blob([JSON.stringify(sortedWordBank, null, 4)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'wordbank.json';
+            link.click();
+        }
+    </script>
+</body>
+</html>
