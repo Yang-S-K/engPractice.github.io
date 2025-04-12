@@ -15,7 +15,7 @@ let questionLimit = Infinity; // 默認為不限題數
 // 載入單字庫
 async function loadWordBank() {
     try {
-        const response = await fetch("final.json");
+        const response = await fetch("mid.json");
         if (!response.ok) throw new Error("檔案載入失敗");
         wordBank = await response.json();
         console.log("預設單字庫已載入：", wordBank);
@@ -25,7 +25,7 @@ async function loadWordBank() {
         resetQuizState();
     } catch (error) {
         console.error("無法載入預設單字庫", error);
-        alert("無法載入預設單字庫，請確認 final.json 是否存在！");
+        alert("無法載入預設單字庫，請確認 mid.json 是否存在！");
     }
 }
 
